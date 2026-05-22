@@ -6636,6 +6636,7 @@ nhiếp ảnh
 nhiệt độ
 nhiệt liệt
 nhiệt lượng
+nhiệt tình
 nhiều
 nhiều lời
 nhiều tiền

@@ -262,6 +262,23 @@ st.markdown(
 # ==========================================
 # MODULE 2: CÁC HÀM TIỀN XỬ LÝ VĂN BẢN
 # ==========================================
+import json
+import os
+
+# Load dictionary words globally
+dict_path = "dictionary.json"
+try:
+    with open(dict_path, "r", encoding="utf-8") as f:
+        DICTIONARY_WORDS = json.load(f)
+except Exception:
+    DICTIONARY_WORDS = []
+
+# Get compound words, sort by word count descending, then by character length descending
+COMPOUND_WORDS = sorted(
+    [w.strip().lower() for w in DICTIONARY_WORDS if " " in w.strip()],
+    key=lambda x: (-len(x.split()), -len(x))
+)
+
 def normalize_lower(text):
     return text.lower()
 
@@ -279,7 +296,26 @@ def remove_extra_spaces(text):
     return " ".join(text.strip().split())
 
 def tokenize(text):
-    return text.split()
+    words = text.split()
+    if not words:
+        return []
+    
+    tokens = []
+    i = 0
+    n = len(words)
+    while i < n:
+        matched = False
+        for k in range(min(5, n - i), 1, -1):
+            phrase = " ".join(words[i:i+k])
+            if phrase in COMPOUND_WORDS:
+                tokens.append(phrase)
+                i += k
+                matched = True
+                break
+        if not matched:
+            tokens.append(words[i])
+            i += 1
+    return tokens
 
 def preprocess(text):
     lower = normalize_lower(text or "")

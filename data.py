@@ -66,4 +66,4 @@ training_data = [
     ("Lưới đan bị chùng, số kg không đúng yêu cầu. Vợt xước xát nhiều chỗ. Trải nghiệm mua hàng quá tồi tệ.", "tiêu cực")
 ]
 
-new_text = "Vợt này dở quá, mua về đánh toàn thắng!"
+new_text = ", shop không nhiệt tình.!"

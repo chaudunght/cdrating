@@ -1,11 +1,10 @@
+import sys
 import math
 from data import training_data, new_text
 
-# ==================================================
-# MODULE 1: DỮ LIỆU & KHAI BÁO ĐẦU VÀO
-# ==================================================
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
 
-# 1.3 In thống kê dữ liệu đầu vào
 print("="*50)
 print("THỐNG KÊ DỮ LIỆU ĐẦU VÀO")
 print("="*50)
@@ -13,10 +12,22 @@ print("="*50)
 print(f"Tổng số văn bản trong training_data: {len(training_data)}")
 print("-" * 50)
 
+import json
+import os
 
-# ==================================================
-# MODULE 2: TIỀN XỬ LÝ VĂN BẢN
-# ==================================================
+# Load dictionary words globally
+dict_path = "dictionary.json"
+try:
+    with open(dict_path, "r", encoding="utf-8") as f:
+        DICTIONARY_WORDS = json.load(f)
+except Exception:
+    DICTIONARY_WORDS = []
+
+# Get compound words, sort by word count descending, then by character length descending
+COMPOUND_WORDS = sorted(
+    [w.strip().lower() for w in DICTIONARY_WORDS if " " in w.strip()],
+    key=lambda x: (-len(x.split()), -len(x))
+)
 
 def normalize_lower(text):
     return text.lower()
@@ -35,7 +46,26 @@ def remove_extra_spaces(text):
     return " ".join(text.strip().split())
 
 def tokenize(text):
-    return text.split()
+    words = text.split()
+    if not words:
+        return []
+    
+    tokens = []
+    i = 0
+    n = len(words)
+    while i < n:
+        matched = False
+        for k in range(min(3, n - i), 1, -1):
+            phrase = " ".join(words[i:i+k])
+            if phrase in COMPOUND_WORDS:
+                tokens.append(phrase)
+                i += k
+                matched = True
+                break
+        if not matched:
+            tokens.append(words[i])
+            i += 1
+    return tokens
 
 def preprocess(text):
     text = normalize_lower(text)
@@ -43,16 +73,11 @@ def preprocess(text):
     text = remove_extra_spaces(text)
     return tokenize(text)
 
-# 2.6 Áp dụng cho toàn bộ dữ liệu
 processed_data = []
 for text, label in training_data:
     tokens = preprocess(text)
     processed_data.append((tokens, label))
 
-
-# ==================================================
-# MODULE 3: BIỂU DIỄN VĂN BẢN & TÍNH ĐIỂM
-# ==================================================
 
 def build_vocab(processed_data):
     vocab = set()
@@ -97,39 +122,25 @@ def score_text(tokens, word_prob, labels):
         scores[label] = score
     return scores
 
-# Khởi tạo dữ liệu
 labels = ["tích cực", "tiêu cực", "trung lập"]
 vocab = build_vocab(processed_data)
 word_prob = build_word_prob(processed_data, labels, vocab)
 
 
-# ==================================================
-# MODULE 4: DỰ ĐOÁN & XUẤT KẾT QUẢ (CẬP NHẬT CHUẨN HÓA)
-# ==================================================
-
-# 4.1 Hàm dự đoán nhãn với chuẩn hóa thang điểm 100
 def predict(text, word_prob, labels):
-    # Tiền xử lý
     tokens = preprocess(text)
-    # Tính điểm log-probability (hệ số âm)
     log_scores = score_text(tokens, word_prob, labels)
     
-    # CHUẨN HÓA SANG HỆ SỐ DƯƠNG (0-100)
-    # Sử dụng kỹ thuật Softmax để chuyển log-probability về xác suất phần trăm
-    max_log = max(log_scores.values()) # Tránh tràn số khi dùng hàm exp
+    max_log = max(log_scores.values())
     
-    # Tính e^(score - max_score)
     exp_scores = {label: math.exp(score - max_log) for label, score in log_scores.items()}
     total_exp = sum(exp_scores.values())
     
-    # Tính tỷ lệ phần trăm (Thang điểm 100)
     normalized_scores = {label: (s / total_exp) * 100 for label, s in exp_scores.items()}
     
-    # Chọn nhãn có điểm cao nhất
     predicted_label = max(normalized_scores, key=normalized_scores.get)
     return predicted_label, normalized_scores
 
-# 4.2 & 4.3 In kết quả
 def display_result(text, predicted_label, scores):
     print("\n" + "="*60)
     print("       HỆ THỐNG PHÂN LOẠI PHẢN HỒI KHÁCH HÀNG")
@@ -139,7 +150,6 @@ def display_result(text, predicted_label, scores):
     
     print("\n--- ĐIỂM SỐ TIN CẬY (Thang điểm 100) ---")
     for label, score in scores.items():
-        # Hiển thị điểm số dương, thang điểm 100
         print(f"  {label.capitalize():<10}: {score:6.2f}")
     
     print("\n--- KẾT QUẢ DỰ ĐOÁN ---")
@@ -155,6 +165,5 @@ def display_result(text, predicted_label, scores):
     print(f"  Nhận xét          : {comment}")
     print("="*60)
 
-# Chạy dự đoán
 predicted_label, scores = predict(new_text, word_prob, labels)
 display_result(new_text, predicted_label, scores)
