@@ -29,3 +29,10 @@ index = [
     {'char': 'x', 'index': 11318},
     {'char': 'y', 'index': 11373},
 ]
+
+a = "a"
+b = "ă"
+if b>a:
+    print("b lớn hơn a")
+else:
+    print("a lớn hơn b")

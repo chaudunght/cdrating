@@ -34,8 +34,6 @@ def remove_punctuation(text):
 def remove_extra_spaces(text):
     return " ".join(text.strip().split())
 
-
-
 def tokenize(text):
     return text.split()
 
