@@ -414,7 +414,8 @@ st.markdown(
 col_btn, _ = st.columns([0.2, 0.8])
 with col_btn:
     if st.button("🚀 Chạy test ngay"):
-        st.session_state.test_text = "Shop nhiệt tình, chăm sóc khách hàng rất tốt"
+        # Lấy giá trị realtime từ session state, tránh ghi đè cứng mặc định
+        st.session_state.test_text = st.session_state.get("test_text", "Shop nhiệt tình, chăm sóc khách hàng rất tốt")
         # Chuyển focus tab sang Dự đoán (Tab thứ 3)
         st.session_state.active_tab = 2
         st.rerun()
@@ -501,18 +502,13 @@ with col_right:
         unsafe_allow_html=True
     )
     
-    test_text_input = st.text_area(
+    # Sử dụng key="test_text" để tự động đồng bộ hóa hai chiều realtime với st.session_state.test_text
+    st.text_area(
         label="Nội dung kiểm thử",
-        value=st.session_state.test_text,
-        key="test_text_input_area",
+        key="test_text",
         height=100,
         label_visibility="collapsed"
     )
-    
-    # Đồng bộ text nhập vào session state
-    if test_text_input != st.session_state.test_text:
-        st.session_state.test_text = test_text_input
-        st.rerun()
         
     # Gợi ý nhập nhanh
     st.markdown(
